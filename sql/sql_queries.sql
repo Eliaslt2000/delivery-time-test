@@ -46,7 +46,7 @@ avg_preparation_time_min FLOAT
 
 ==================================================================================================
 table_name = tb_order
-zone = results.transactional
+zone = results_transactional
 -- Orders table
 orders (
 order_id INT,
@@ -72,7 +72,6 @@ ASSUMPTIONS:
 on this in sql_insights.md.
 ==================================================================================================
 */
-
 
 WITH 
 max_or_date AS(
@@ -105,8 +104,6 @@ SELECT
 FROM ranked_areas 
 WHERE ranking <= 5
 ORDER BY ranking, customer_area;
-
-COMPUTE INCREMENTAL STATS development.tb_delivery_data ;
   
 /*
 ==================================================================================================
@@ -229,3 +226,58 @@ WHERE  ranked_deliveries <= 10
 ORDER BY 
     ranked_deliveries,
     delivery_person_id;
+
+/*
+==================================================================================================
+QUESTION 4: The most profitable restaurant area in the last 3 months, defined as the area with the highest total order value.
+--------------------------
+ASSUMPTIONS: 
+1. Because there are no ingestion dates or year/month/day partition columns, I used order_placed_at to get the deliveries from the last 30 days.
+2. The reference date is MAX(order_placed_at), not NOW(), so the query also works on historical data.
+3. total_items_count is shown so the business can judge how reliable each average is. No minimum threshold is applied.
+4. I used DENSE_RANK() instead of ROW_NUMBER() so it can bring more information to the business in case a tie happens. I'll expand more
+on this in sql_insights.md.
+5."Profitable" follows the brief: total order value, which is revenue, not profit (the data has no costs).
+6.The area comes from tb_delivery_level_data (restaurant_area), as in Q2.
+==================================================================================================
+*/
+WITH 
+order_date AS(
+    SELECT 
+        MAX(order_placed_at)                                                  AS order_date_max
+    FROM results_deliveries.tb_delivery_level_data
+),
+deliveries AS(
+    SELECT 
+        dinfo.delivery_id, 
+        dinfo.restaurant_area
+    FROM results_deliveries.tb_delivery_level_data     AS dinfo 
+    CROSS JOIN order_date                              AS odate
+    WHERE dinfo.order_placed_at >= MONTHS_SUB(odate.order_date_max,3)
+),
+area_order AS(
+    SELECT 
+        deli.restaurant_area,
+        SUM(ord.order_value)                                                 AS total_order_value, 
+        SUM(ord.items_count)                                                 AS total_items_count
+    FROM deliveries                                 AS deli
+    INNER JOIN results_transactional.tb_order       AS ord 
+    ON deli.delivery_id = ord.delivery_id 
+    GROUP BY deli.restaurant_area
+),
+top_area AS(
+    SELECT 
+        restaurant_area,
+        total_order_value, 
+        total_items_count,
+        DENSE_RANK() OVER(ORDER BY total_order_value DESC)                   AS ranked_order_value
+    FROM area_order 
+)
+SELECT 
+    restaurant_area,
+    total_order_value, 
+    total_items_count,
+    ranked_order_value
+FROM top_area 
+WHERE ranked_order_value = 1
+ORDER BY restaurant_area;
