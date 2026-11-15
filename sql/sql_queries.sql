@@ -405,6 +405,8 @@ WHERE delta_mins > 0
 ORDER BY    
     z_score DESC;
 
+DROP TABLE IF EXISTS development.tmp_calendar PURGE;
+
 
 
 
