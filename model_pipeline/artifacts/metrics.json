@@ -1,0 +1,73 @@
+{
+  "cv": [
+    {
+      "model": "elasticnet_missing",
+      "rmse_mean": 10.9746,
+      "rmse_std": 0.6866,
+      "mae_mean": 6.7699,
+      "mae_std": 0.4198,
+      "r2_mean": 0.7535,
+      "r2_std": 0.0335
+    },
+    {
+      "model": "ridge_missing",
+      "rmse_mean": 10.9762,
+      "rmse_std": 0.6941,
+      "mae_mean": 6.7923,
+      "mae_std": 0.438,
+      "r2_mean": 0.7534,
+      "r2_std": 0.0339
+    },
+    {
+      "model": "ridge_most_frequent",
+      "rmse_mean": 11.052,
+      "rmse_std": 0.6701,
+      "mae_mean": 6.8349,
+      "mae_std": 0.4148,
+      "r2_mean": 0.7498,
+      "r2_std": 0.0339
+    },
+    {
+      "model": "ridge_random",
+      "rmse_mean": 11.0977,
+      "rmse_std": 0.694,
+      "mae_mean": 6.8599,
+      "mae_std": 0.4553,
+      "r2_mean": 0.748,
+      "r2_std": 0.033
+    },
+    {
+      "model": "catboost",
+      "rmse_mean": 11.4698,
+      "rmse_std": 1.0267,
+      "mae_mean": 7.1559,
+      "mae_std": 0.6147,
+      "r2_mean": 0.7296,
+      "r2_std": 0.0507
+    },
+    {
+      "model": "baseline_mean",
+      "rmse_mean": 22.29,
+      "rmse_std": 0.7948,
+      "mae_mean": 17.92,
+      "mae_std": 0.3967,
+      "r2_mean": -0.0102,
+      "r2_std": 0.0089
+    }
+  ],
+  "test": {
+    "ridge": {
+      "rmse": 8.761968295873517,
+      "mae": 5.931190423901182,
+      "r2": 0.8287205083587559
+    },
+    "catboost": {
+      "rmse": 9.20855652676594,
+      "mae": 6.268329058547754,
+      "r2": 0.8108156848287776
+    }
+  },
+  "ridge_alpha": 10.0,
+  "n_train": 800,
+  "n_test": 200
+}
