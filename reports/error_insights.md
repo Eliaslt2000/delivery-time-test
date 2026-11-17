@@ -1,6 +1,6 @@
 # Error insights
 
-All the numbers come from the 200 test rows and the Ridge model (`notebooks/model_training.ipynb`, sections 5 and 7).
+All the numbers come from the 200 test rows and the Ridge model (notebooks/model_training.ipynb, sections 5 and 7).
 
 **Residual = real time - predicted time.** A positive residual means the model **underestimates** (it says less time than the real one, so the customer waits longer than promised). A negative residual means it overestimates.
 
@@ -38,7 +38,7 @@ The residual plot has a funnel shape: the errors are tight for short predicted t
 
 - Foggy and High traffic have the largest errors. Clear weather is the most accurate group.
 - Rainy is **not** underestimated (bias -1.21).
-- Time of day `"Missing"` has the largest MAE (13.72), but with only 6 rows I treat it as a clue and not as a conclusion. Night (+4.01, 9 rows) is also a very small group.
+- Time of day "Missing" has the largest MAE (13.72), but with only 6 rows I treat it as a clue and not as a conclusion. Night (+4.01, 9 rows) is also a very small group.
 - Vehicle type shows small differences (MAE from 4.82 for Car to 6.16 for Bike).
 
 ## Is the fog bias real?

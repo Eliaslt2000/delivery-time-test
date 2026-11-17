@@ -1,6 +1,6 @@
 # Explainability
 
-Three tools, computed in `notebooks/model_training.ipynb` (sections 4 and 7):
+Three tools, computed in notebooks/model_training.ipynb (sections 4 and 7):
 
 - **Ridge coefficients.** The change in the predicted time when a feature goes up by one unit with the others fixed. The numeric features are standardized, so I divide by the std of each feature to get minutes per unit.
 - **Permutation importance** (test set, Ridge and CatBoost). How much the RMSE increases, in minutes, when one feature is shuffled. A feature that matters hurts the model when it is shuffled.
@@ -38,13 +38,13 @@ Categorical features (minutes added or removed against the model baseline; compa
 
 - **Traffic:** High +4.97, Medium -0.38, Low -5.73. High traffic adds about 10.7 min compared with Low.
 - **Weather:** Snowy +4.46, Foggy +1.54, Rainy +0.56, Windy -2.61, Clear -4.32. Snowy is about 8.8 min slower than Clear.
-- **Time of day:** Evening -0.02, Afternoon -0.98, Morning -1.86, Night -1.99. The `"Missing"` category is +4.83, but it is a small group of rows and the whole feature has almost no importance, so I do not trust it as a real effect.
+- **Time of day:** Evening -0.02, Afternoon -0.98, Morning -1.86, Night -1.99. The "Missing" category is +4.83, but it is a small group of rows and the whole feature has almost no importance, so I do not trust it as a real effect.
 - **Vehicle type:** Scooter -0.68, Car +0.61, Bike +0.07: close to zero.
 
 ## What happens with experience, time of day and vehicle type
 They add almost nothing. Shuffling experience moves the RMSE by 0.36 min, time of day by 0.13 and vehicle type by 0.03, so the model barely needs them.
 
-## Caveats
+## Limitations
 - Permutation importance comes from the 200 test rows, so values below about 0.3 min cannot be told apart from zero (see the std in the notebook).
 - The coefficients of different categories are only comparable inside the same feature.
 - Importance is not causality: the model describes the data, and it does not prove that changing a feature changes the delivery time.
