@@ -12,3 +12,4 @@ scikit-learn==1.9.1
 seaborn==0.13.2
 shap==0.54.1
 uvicorn==0.54.0
+scipy==1.18.1
