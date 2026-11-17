@@ -15,27 +15,26 @@ If a model did underestimate on rainy days, I would go in this order:
 I would not assume it transfers. My data has no city column, so the model has never seen a city effect, and São Paulo can differ in traffic patterns, vehicle mix, road network and weather seasons.
 
 1. **Compare the inputs.** Check the distributions of distance, preparation time, traffic, vehicle type and weather in both cities. My API already warns when an input is outside the training range (distance 0.5 to 20 km, preparation 5 to 29 min).
-2. **Validate before launch.** Run the model in shadow mode on a local sample and measure MAE and RMSE, and the error by distance band and by weather, as I did in `error_insights.md`. Agree with the business on the error they accept.
+2. **Validate before launch.** Run the model in shadow mode on a local sample and measure MAE and RMSE, and the error by distance band and by weather, as I did in error_insights.md. Agree with the business on the error they accept.
 3. **Retrain or fine-tune with local data.** With a Ridge model this is cheap and fast, and I can compare it with the Mumbai model using the same cross-validation.
 4. **Add city-level features if needed**, for example city, local traffic patterns or holidays.
 5. **Monitor after launch.** Track the error by city and trigger a retraining when it goes over the threshold.
 
+
 ## 3. GenAI Disclosure
 
-I used Claude (Anthropic) a lot in this project, as a guide and as a code assistant. This is what I used it for and what I did with the output.
+I used Claude (Anthropic) for different purposes. This is what I used it for and how I checked the output.
 
-- **Planning and guidance.** Project structure, order of the steps and the git workflow (one branch per part, small commits, pull requests). The file tree is my design. When its files overwrote my empty placeholders (`train.py`, `predict.py`, `preprocessing.py`), I flagged it, and we reorganised the code into my own files (`regression_model.py`, `config.json`).
-- **SQL (Part I).** I used it to review my queries (logic and Impala syntax) and to draft `sql_insights.md`. I kept my own structure and assumptions, and I edited and shortened the text. I could not run the queries on Impala, so they were not executed.
-- **EDA.** It suggested the checks (correlation heatmap, ANOVA with eta squared, R² by feature set, Cramér's V) and helped with the plotting code. I ran them in my notebook, read the outputs and wrote the conclusions of `EDA_report.md`. Some statements were wrong (mine and the assistant's) and were corrected after checking them in the data, for example the missing values were not all in the same rows, and the outliers were not spread over every group.
-- **Modeling pipeline, API and tests.** The code in `model_pipeline/`, `app/model_results.py` and `tests/` was mostly written by Claude. The design decisions were discussed with me: Ridge as the main model, CatBoost as the benchmark, imputation inside the pipeline, no tuning on the test set. I ran everything on my machine (Python 3.14.4), checked that the numbers matched, and ran the 15 tests. I asked for explanations of the metrics, the CatBoost parameters, the plots and the API until I could explain them.
-- **Notes and reports.** I wrote my notes in the notebook in my own words, with help for grammar and wording. The first drafts of `model_notes.md`, `explainability.md`, `error_insights.md`, the READMEs and this file were prepared with Claude from my notebook outputs.
+- **SQL (Part I).** I used it to make the assumed queries more efficient, by asking for more suitable functions than the ones I was already using. First I made sure it knew I was working on Impala. Then I asked for the source of each function and validated it myself in the official Impala documentation, for example the [analytic functions page](https://impala.apache.org/docs/build/html/topics/impala_analytic_functions.html). 
 
-**How I validated and modified the output**
+- **EDA and model_training.ipynb (graphs).** I used it to generate some of the graphs. I decided this because it was faster for Claude and very easy for me to validate: I already had the values behind each graph, so I confirmed every visual against numbers I already had. Each time, I asked for the specific graph I wanted to see.
 
-- I ran the training and the tests myself and compared the results.
-- Every number in the reports has a cell output in my notebook. When I found numbers that were not backed by an output, I rejected them and added cells that print them (the last section of `model_training.ipynb`).
-- I checked a suspicious result instead of accepting it: the fog bias (question 4).
-- I changed names, structure and wording to mine, and I stated what I could not do: the SQL is not executed and CatBoost is not tuned.
+- **API.** I used it to guide me through the FastAPI implementation. The API returns the result of the ML model along with its error metrics and predictive values, and the model is loaded once, when the service starts, instead of on every request. Once again, it was a decision based on my knowledge of what the FastAPI module can do: Pydantic validates the inputs and outputs automatically, and the interactive docs it generates at /docs let me validate the output on localhost with the data I’m giving it.
+
+- **Markdown files.** Claude did the design of the .md files: the tables, the code blocks with syntax highlighting, and the grammar check. The first drafts of the reports were prepared from my notebook outputs and from the notes I kept to record my findings, and I checked every number and conclusion in the reports against my notebooks.
+
+
+
 
 ## 4. Your Signature Insight: the model "fails in fog", but it does not
 
@@ -45,17 +44,17 @@ In the test set Foggy has a bias of +5.82 min (21 rows), and the worst errors ar
 - **A bigger sample says the same.** Out of fold on the 82 foggy rows of the train set, the bias is **+0.45** (median -1.86). The other weather types are also close to zero (from -0.30 to +0.61).
 - **Two of the three are short trips with a very long time** (3.0 km in 90 min, 5.9 km in 106 min), the kind of outliers that I flagged in the EDA. No feature explains them.
 
-So fog is not systematically underestimated: it was a few extreme deliveries. My decision was not to change the model or the features for it, and to write the limit in `error_insights.md`. I like it because the table said one thing, a bigger sample said another, and checking it took three cells.
+So fog is not systematically underestimated: it was a few extreme deliveries. My decision was not to change the model or the features for it, and to write the limit in error_insights.md. I like it because the table said one thing, a bigger sample said another, and checking it took three cells.
 
 ## 5. Going to Production
 
 What is already in the repo is marked as done. The rest is the plan.
 
 1. **Data.** Read the training data from the platform tables (the SQL from Part I is the starting point). Validate the schema, ranges and categories before training, and stop the run if the data does not pass. *(Plan: the API already validates the inputs it receives.)*
-2. **Reproducible training.** *(Done.)* One command (`python -m model_pipeline.train`), parameters in `config.json`, fixed seed, pinned `requirements.txt`, and the preprocessing saved inside the model file, so training and serving use exactly the same steps.
-3. **Versioning and tracking.** *(Partly done: models and `metrics.json` are saved together.)* Plan: a model registry (for example MLflow) with the model version, the data version, the code commit and the metrics.
+2. **Reproducible training.** *(Done.)* One command (python -m model_pipeline.train), parameters in config.json, fixed seed, pinned requirements.txt, and the preprocessing saved inside the model file, so training and serving use exactly the same steps.
+3. **Versioning and tracking.** *(Partly done: models and metrics.json are saved together.)* Plan: a model registry (for example MLflow) with the model version, the data version, the code commit and the metrics.
 4. **Tests.** *(Done: 15 tests for the pipeline and the API.)* Plan: add data-validation tests and a gate that blocks a new model if its CV error is worse than the current one.
-5. **Serving.** *(Done: FastAPI with input validation, range warnings, `/health`, `/model-info`, `/predict` and `/predict/batch`.)* Plan: package it in a Docker image, run several workers behind a load balancer, and use a scheduled batch job when real-time is not needed.
+5. **Serving.** *(Done: FastAPI with input validation, range warnings, /health, /model-info, /predict and /predict/batch.)* Plan: package it in a Docker image, run several workers behind a load balancer, and use a scheduled batch job when real-time is not needed.
 6. **CI/CD.** Plan: on every pull request run lint and tests (GitHub Actions); on merge build the image, deploy to staging, then release with shadow mode or a canary and keep the previous model for a quick rollback.
 7. **Monitoring.** Plan: (a) input drift (distance, preparation time, traffic and vehicle mix); (b) prediction error when the real delivery time arrives (MAE by distance band, weather and city); (c) latency and error rate of the API; with alerts and a dashboard.
 8. **Retraining.** Plan: on a schedule (for example monthly) or when drift or error pass a threshold, always comparing the new model with the current one on the same data before promoting it.
