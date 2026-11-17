@@ -1,0 +1,47 @@
+{
+  "paths": {
+    "data": "data/raw/Food_Delivery_Times.csv",
+    "artifacts": "model_pipeline/artifacts",
+    "reports": "reports"
+  },
+  "columns": {
+    "target": "Delivery_Time_min",
+    "id": "Order_ID",
+    "numeric": ["Distance_km", "Preparation_Time_min", "Courier_Experience_yrs"],
+    "categorical": ["Weather", "Traffic_Level", "Time_of_Day", "Vehicle_Type"]
+  },
+  "categories": {
+    "Weather": ["Clear", "Windy", "Foggy", "Rainy", "Snowy"],
+    "Traffic_Level": ["Low", "Medium", "High"],
+    "Time_of_Day": ["Morning", "Afternoon", "Evening", "Night"],
+    "Vehicle_Type": ["Bike", "Scooter", "Car"]
+  },
+  "training": {
+    "random_state": 42,
+    "test_size": 0.2,
+    "cv_folds": 5,
+    "missing_label": "Missing"
+  },
+  "models": {
+    "primary": "ridge",
+    "files": {
+      "ridge": "model_ridge.joblib",
+      "catboost": "model_catboost.joblib"
+    },
+    "metrics_file": "metrics.json",
+    "ridge": {
+      "alphas_logspace": [-3, 3, 13]
+    },
+    "elasticnet": {
+      "l1_ratio": [0.1, 0.5, 0.9, 1.0],
+      "cv": 5,
+      "max_iter": 10000
+    },
+    "catboost": {
+      "iterations": 500,
+      "learning_rate": 0.05,
+      "depth": 4,
+      "l2_leaf_reg": 5
+    }
+  }
+}
